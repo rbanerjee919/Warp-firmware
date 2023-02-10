@@ -47,8 +47,8 @@ enum _gpio_pins
 	#endif
 
 	kWarpPinSPI_MISO_UART_RTS		= GPIO_MAKE_PIN(HW_GPIOA, 6),
-	kWarpPinSPI_MOSI_UART_CTS		= GPIO_MAKE_PIN(HW_GPIOA, 7),
-	kWarpPinADXL362_SPI_nCS			= GPIO_MAKE_PIN(HW_GPIOA, 8),
+	kWarpPinSPI_MOSI_UART_CTS		= GPIO_MAKE_PIN(HW_GPIOA, 8),
+	kWarpPinADXL362_SPI_nCS			= GPIO_MAKE_PIN(HW_GPIOB, 13),
 
 	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
 		kWarpPinSPI_SCK			= GPIO_MAKE_PIN(HW_GPIOA, 9),
@@ -64,7 +64,7 @@ enum _gpio_pins
 		kGlauxPinLED			= GPIO_MAKE_PIN(HW_GPIOB, 0),
 		kGlauxPinUnusedPTB1		= GPIO_MAKE_PIN(HW_GPIOB, 1),
 	#else
-		kWarpPinSPI_SCK			= GPIO_MAKE_PIN(HW_GPIOB, 0),
+		kWarpPinSPI_SCK			= GPIO_MAKE_PIN(HW_GPIOA, 9),
 		kWarpPinFPGA_nCS		= GPIO_MAKE_PIN(HW_GPIOB, 1),
 	#endif
 

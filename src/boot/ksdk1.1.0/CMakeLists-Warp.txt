@@ -3,6 +3,7 @@ INCLUDE(CMakeForceCompiler)
 # CROSS COMPILER SETTING
 SET(CMAKE_SYSTEM_NAME Generic)
 CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
+PROJECT(PROJECT_NAME)
 
 # THE VERSION NUMBER
 SET (Tutorial_VERSION_MAJOR 1)
@@ -111,6 +112,7 @@ ADD_EXECUTABLE(Warp
     "${ProjDirPath}/../../src/devBGX.c"
     "${ProjDirPath}/../../src/devAS7262.c"
     "${ProjDirPath}/../../src/devAS7263.c"
+    "${ProjDirPath}/../../src/devSSD1331.c"
 #   "${ProjDirPath}/../../src/devMAX11300.c
     "${ProjDirPath}/../../src/SEGGER_RTT.c"
     "${ProjDirPath}/../../src/SEGGER_RTT_printf.c"

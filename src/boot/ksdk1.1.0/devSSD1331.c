@@ -161,6 +161,11 @@ devSSD1331init(void)
 	 *	Any post-initialization drawing commands go here.
 	 */
 	//...
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
     
     writeCommand(0x22); //equivalent to writeCommand(kSSD1331CommandRECT)
     
@@ -176,10 +181,18 @@ devSSD1331init(void)
     writeCommand(0xFF);
     writeCommand(0x00);
     
+<<<<<<< Updated upstream
     writeCommand(0x00); //Set RGB colour values for fill
     writeCommand(0xFF);
     writeCommand(0x00);
     
+=======
+    writeCommand(0xFF); //Set RGB colour values for fill
+    writeCommand(0x00);
+    writeCommand(0x00);
+    
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 
 
 

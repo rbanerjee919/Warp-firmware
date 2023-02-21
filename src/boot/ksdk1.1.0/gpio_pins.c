@@ -38,20 +38,7 @@ gpio_output_pin_user_config_t	outputPins[] = {
 			.config.slewRate = kPortSlowSlewRate,
 			.config.driveStrength = kPortLowDriveStrength,
 		},
-		/*	We only use these as SPI, despite being connected to RTS/CTS on revC
-		{
-			.pinName = kWarpPinSPI_MISO_UART_RTS,
-			.config.outputLogic = 1,
-			.config.slewRate = kPortSlowSlewRate,
-			.config.driveStrength = kPortLowDriveStrength,
-		},
-		{
-			.pinName = kWarpPinSPI_MOSI_UART_CTS,
-			.config.outputLogic = 1,
-			.config.slewRate = kPortSlowSlewRate,
-			.config.driveStrength = kPortLowDriveStrength,
-		},
-		*/
+    
 		{
 			.pinName = kWarpPinADXL362_SPI_nCS,
 			.config.outputLogic = 1,
@@ -80,14 +67,6 @@ gpio_output_pin_user_config_t	outputPins[] = {
 			.config.slewRate = kPortSlowSlewRate,
 			.config.driveStrength = kPortLowDriveStrength,
 		},
-		/*	Not GPIO, so don't configure it as GPIO
-		{
-			.pinName = kWarpPinSPI_SCK,
-			.config.outputLogic = 1,
-			.config.slewRate = kPortSlowSlewRate,
-			.config.driveStrength = kPortLowDriveStrength,
-		},
-		*/
 		{
 			.pinName = kWarpPinFPGA_nCS,
 			.config.outputLogic = 1,
@@ -144,6 +123,12 @@ gpio_output_pin_user_config_t	outputPins[] = {
 			.config.slewRate = kPortSlowSlewRate,
 			.config.driveStrength = kPortLowDriveStrength,
 		},
+        /*{
+            .pinName = kWarpPinSPI_MISO_UART_RTS,
+            .config.outputLogic = 1,
+            .config.slewRate = kPortSlowSlewRate,
+            .config.driveStrength = kPortLowDriveStrength,
+        },*/
 		/*	Not GPIO, so don't configure it as GPIO
 		{
 			.pinName = kWarpPinCLKOUT32K,

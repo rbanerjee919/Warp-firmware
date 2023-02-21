@@ -167,6 +167,11 @@
 	volatile WarpI2CDeviceState			deviceAS7263State;
 #endif
 
+#if (WARP_BUILD_ENABLE_DEVINA219)
+    #include "devINA219.h"
+    volatile WarpI2CDeviceState            deviceINA219State;
+#endif
+
 #if (WARP_BUILD_ENABLE_DEVRV8803C7)
 	#include "devRV8803C7.h"
 	volatile WarpI2CDeviceState			deviceRV8803C7State;
@@ -489,7 +494,7 @@ warpEnableSPIpins(void)
 	CLOCK_SYS_EnableSpiClock(0);
 
 	/*	kWarpPinSPI_MISO_UART_RTS_UART_RTS --> PTA6 (ALT3)	*/
-	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAlt3);
+	//PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAlt3);
 
 	/*	kWarpPinSPI_MOSI_UART_CTS --> PTA7 (ALT3)	*/
 	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAlt3);
@@ -1619,6 +1624,56 @@ main(void)
 //		initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
 		initMMA8451Q(	0x1D	/* i2cAddress */,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
 	#endif
+    
+#if (WARP_BUILD_ENABLE_DEVINA219)
+        initINA219(    0x40    /* i2cAddress */,        kWarpDefaultSupplyVoltageMillivoltsINA219  );
+        warpPrint("BEGIN CURRENT MEASUREMENTS\n");
+
+         int current, shuntVoltage, loadVoltage;
+         unsigned int busVoltage, power;
+
+         for (size_t i = 0; i < 5; i++) //Change 5 to 1000
+         {
+             current = devINA219getCurrent();
+             shuntVoltage = devINA219getShuntVoltage();
+             busVoltage = devINA219getBusVoltage();
+             power = devINA219getPower();
+             loadVoltage = busVoltage + shuntVoltage*0.001;
+
+             warpPrint(" > Reading [%4d of 1000]: ", i+1);
+             /*if (current == 0 || busVoltage == 0 || shuntVoltage == 0)
+                 warpPrint("ERROR\n");
+             else*/
+             warpPrint("Shunt Voltage: %4d uV", shuntVoltage);
+             warpPrint(" // ");
+             warpPrint("Bus Voltage: %4d mV", busVoltage);
+             warpPrint(" // ");
+             warpPrint("Current: %6d uA", current);
+             warpPrint(" // ");
+             warpPrint("Power: %4d uW", power);
+             warpPrint(" // ");
+             warpPrint("Load voltage: %4d mV", loadVoltage);
+             warpPrint("\n");
+             
+             //For CSV
+             /*
+              warpPrint("--------------------------------------------------\n");
+                       warpPrint("Current (uA), Bus Voltage (mV), ");
+                       warpPrint("Shunt Voltage (uV), Power (uW)\n");
+              warpPrint(
+                              "%12d, %16d, %18d, %10d\n",
+                              current,
+                              power,
+                              loadVoltage,
+              );
+              
+              warpPrint("--------------------------------------------------\n");
+                       warpPrint("END oF CSV\n\n");
+              
+              */
+         }
+         warpPrint("END CURRENT MEASUREMENTS\n");
+#endif
 
 	#if (WARP_BUILD_ENABLE_DEVLPS25H)
 		initLPS25H(	0x5C	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsLPS25H	);
@@ -2007,7 +2062,7 @@ main(void)
 		 *	commands.
 		 */
         
-        devSSD1331init();
+        //devSSD1331init();
         
 		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
 
@@ -2156,6 +2211,12 @@ main(void)
 				#else
 					warpPrint("\r\t- 'k' AS7263			(0x00--0x2B): 2.7V -- 3.6V (compiled out) \n");
 				#endif
+                
+                #if (WARP_BUILD_ENABLE_DEVINA219)
+                    warpPrint("\r\t- 'l' INA219            (0x00--0x05): 0.0 -- 6.0V\n");
+                #else
+                    warpPrint("\r\t- 'l' INA219            (0x00--0x05): 0.0 -- 6.0V (compiled out) \n");
+                #endif
 
 				warpPrint("\r\tEnter selection> ");
 				key = warpWaitKey();
@@ -2305,6 +2366,14 @@ main(void)
 						menuI2cDevice = &deviceAS7263State;
 						break;
 					}
+#endif
+#if (WARP_BUILD_ENABLE_DEVINA219)
+                    case 'l':
+                    {
+                        menuTargetSensor = kSensorINA219;
+                        menuI2cDevice = &deviceINA219State;
+                        break;
+                    }
 #endif
 					default:
 					{
@@ -3912,6 +3981,35 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 
 			break;
 		}
+            
+        case kSensorINA219:
+                {
+                    /*
+                     *    INA219: VDD 0.0--6.0
+                     */
+                    #if WARP_BUILD_ENABLE_DEVINA219
+                        loopForSensor(    "\r\nINA219:\n\r",        /*    tagString            */
+                                &devINA219read,    /*    readSensorRegisterFunction    */
+                                &deviceINA219State,        /*    i2cDeviceState            */
+                                NULL,                /*    spiDeviceState            */
+                                baseAddress,            /*    baseAddress            */
+                                0x00,                /*    minAddress            */
+                                0x05,                /*    maxAddress            */
+                                repetitionsPerAddress,        /*    repetitionsPerAddress        */
+                                chunkReadsPerAddress,        /*    chunkReadsPerAddress        */
+                                spinDelay,            /*    spinDelay            */
+                                autoIncrement,            /*    autoIncrement            */
+                                sssupplyMillivolts,        /*    sssupplyMillivolts        */
+                                referenceByte,            /*    referenceByte            */
+                                adaptiveSssupplyMaxMillivolts,    /*    adaptiveSssupplyMaxMillivolts    */
+                                chatty                /*    chatty                */
+                                );
+                    #else
+                        warpPrint("\r\n\tAS7263 Read Aborted. Device Disabled :( ");
+                    #endif
+
+                    break;
+                }
 
 		default:
 		{

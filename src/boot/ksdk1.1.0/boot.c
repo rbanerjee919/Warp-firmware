@@ -1641,9 +1641,6 @@ main(void)
              loadVoltage = busVoltage + shuntVoltage*0.001;
 
              warpPrint(" > Reading [%4d of 1000]: ", i+1);
-             /*if (current == 0 || busVoltage == 0 || shuntVoltage == 0)
-                 warpPrint("ERROR\n");
-             else*/
              warpPrint("Shunt Voltage: %4d uV", shuntVoltage);
              warpPrint(" // ");
              warpPrint("Bus Voltage: %4d mV", busVoltage);
@@ -1658,10 +1655,10 @@ main(void)
              //For CSV
              /*
               warpPrint("--------------------------------------------------\n");
-                       warpPrint("Current (uA), Bus Voltage (mV), ");
-                       warpPrint("Shunt Voltage (uV), Power (uW)\n");
+                       warpPrint("Current (uA), Power (uW)");
+                       warpPrint(Lload Voltage (mV), \n");
               warpPrint(
-                              "%12d, %16d, %18d, %10d\n",
+                              "%12d, %10d, %16d\n",
                               current,
                               power,
                               loadVoltage,

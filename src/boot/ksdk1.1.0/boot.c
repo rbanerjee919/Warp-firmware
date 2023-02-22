@@ -2059,7 +2059,7 @@ main(void)
 		 *	commands.
 		 */
         
-        //devSSD1331init();
+        devSSD1331init();
         
 		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
 

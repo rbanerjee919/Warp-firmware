@@ -622,8 +622,8 @@ warpEnableI2Cpins(void)
 	 *		PTB3/kWarpPinI2C0_SCL_UART_TX	-->	(ALT2 == I2C)
 	 *		PTB4/kWarpPinI2C0_SDA_UART_RX	-->	(ALT2 == I2C)
 	 */
-	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortMuxAlt2);
-	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortMuxAlt2);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 8, kPortMuxAlt2);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortMuxAlt2);
 
 	I2C_DRV_MasterInit(0 /* I2C instance */, (i2c_master_state_t *)&i2cMasterState);
 }
@@ -1627,7 +1627,7 @@ main(void)
     
 #if (WARP_BUILD_ENABLE_DEVINA219)
         initINA219(    0x40    /* i2cAddress */,        kWarpDefaultSupplyVoltageMillivoltsINA219  );
-        warpPrint("BEGIN CURRENT MEASUREMENTS\n");
+        warpPrint("BEGIN INA219 MEASUREMENTS\n");
 
          int current, shuntVoltage, loadVoltage;
          unsigned int busVoltage, power;
@@ -1655,10 +1655,10 @@ main(void)
              //For CSV
              /*
               warpPrint("--------------------------------------------------\n");
-                       warpPrint("Current (uA), Power (uW)");
-                       warpPrint(Lload Voltage (mV), \n");
+                       warpPrint("Current (uA), Power (mW)");
+                       warpPrint(Lload Voltage (V), \n");
               warpPrint(
-                              "%12d, %10d, %16d\n",
+                              "%5d, %3d, %3d\n",
                               current,
                               power,
                               loadVoltage,
@@ -1669,7 +1669,7 @@ main(void)
               
               */
          }
-         warpPrint("END CURRENT MEASUREMENTS\n");
+         warpPrint("END IAN219 MEASUREMENTS\n");
 #endif
 
 	#if (WARP_BUILD_ENABLE_DEVLPS25H)

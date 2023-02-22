@@ -119,7 +119,7 @@ initINA219(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts);
  devINA219writeRegisterPointer(INA219Register deviceRegister);
 
  WarpStatus
- devINA219read(void);
+ devINA219read(uint8_t deviceRegister, int numberOfBytes);
 
 int
 devINA219getCurrent(void);

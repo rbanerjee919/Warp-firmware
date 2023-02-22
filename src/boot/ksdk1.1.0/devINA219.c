@@ -140,8 +140,9 @@ devINA219writeRegisterPointer(INA219Register deviceRegister)
 }
 
 WarpStatus
-devINA219read(void)
+devINA219read(uint8_t deviceRegister, int numberOfBytes)
 {
+    uint8_t        cmdBuf[1] = {0xFF};
     i2c_status_t    status;
 
     USED(2);
@@ -153,12 +154,13 @@ devINA219read(void)
     };
 
     warpScaleSupplyVoltage(deviceINA219State.operatingVoltageMillivolts);
+    cmdBuf[0] = deviceRegister;
     warpEnableI2Cpins();
 
     status = I2C_DRV_MasterReceiveDataBlocking(
                             0 /* I2C instance */,
                             &slave,
-                            NULL,
+                            cmdBuf,
                             0,
                             (uint8_t *)deviceINA219State.i2cBuffer,
                             2,
@@ -187,7 +189,7 @@ devINA219getCurrent(void)
     if (status != kWarpStatusOK) return 0; /* error condition  */
 
     /* read from device */
-    status = devINA219read();
+    status = devINA219read(kINA219RegisterCurrent,2);
     if (status != kWarpStatusOK) return 0; /* error condition  */
 
     current_raw = (int16_t) (
@@ -209,7 +211,7 @@ devINA219getBusVoltage(void)
     if (status != kWarpStatusOK) return 0; /* error condition  */
 
     /* read from device */
-    status = devINA219read();
+    status = devINA219read(kINA219RegisterBusVoltage,2);
     if (status != kWarpStatusOK) return 0; /* error condition  */
 
     voltage_raw.lsb = deviceINA219State.i2cBuffer[1];
@@ -230,7 +232,7 @@ devINA219getShuntVoltage(void)
     if (status != kWarpStatusOK) return 0; /* error condition  */
 
     /* read from device */
-    status = devINA219read();
+    status = devINA219read(kINA219RegisterShuntVoltage,2);
     if (status != kWarpStatusOK) return 0; /* error condition  */
 
     voltage_raw = (int16_t) (
@@ -254,7 +256,7 @@ devINA219getPower(void)
     if (status != kWarpStatusOK) return 0; /* error condition  */
 
     /* read from device */
-    status = devINA219read();
+    status = devINA219read(kINA219RegisterPower,2);
     if (status != kWarpStatusOK) return 0; /* error condition  */
 
     power_raw = (uint16_t) (

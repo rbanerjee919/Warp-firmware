@@ -11,7 +11,7 @@ typedef enum { /* register map */
      kINA219RegisterCalibration   = 0x05,
  } INA219Register;
 
- #define INA219_CAL         0xA000
+ #define INA219_CAL         0x1000
 //32V 2A config
  #define INA219_CURRENT_LSB 100
 #define INA219_POWER_LSB   (20 * INA219_CURRENT_LSB)

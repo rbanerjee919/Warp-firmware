@@ -54,7 +54,7 @@ initINA219(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 
     OSA_TimeDelay(100);
 
-    devINA219writeRegisterPointer(kINA219RegisterCurrent);
+    //devINA219writeRegisterPointer(kINA219RegisterCurrent);
 
     
     PORT_HAL_SetMuxMode(PORTA_BASE, 8u, kPortMuxAlt2);
@@ -161,9 +161,9 @@ devINA219read(uint8_t deviceRegister, int numberOfBytes)
                             0 /* I2C instance */,
                             &slave,
                             cmdBuf,
-                            0,
+                            1,
                             (uint8_t *)deviceINA219State.i2cBuffer,
-                            2,
+                            numberOfBytes,
                             gWarpI2cTimeoutMilliseconds);
 
     if (status != kStatus_I2C_Success)
@@ -186,11 +186,11 @@ devINA219getCurrent(void)
 
     /* set register pointer to current */
     status = devINA219writeRegisterPointer(kINA219RegisterCurrent);
-    if (status != kWarpStatusOK) return 0; /* error condition  */
+    if (status != kWarpStatusOK) return 100; /* error condition  */
 
     /* read from device */
     status = devINA219read(kINA219RegisterCurrent,2);
-    if (status != kWarpStatusOK) return 0; /* error condition  */
+    if (status != kWarpStatusOK) return 200; /* error condition  */
 
     current_raw = (int16_t) (
         deviceINA219State.i2cBuffer[1] |

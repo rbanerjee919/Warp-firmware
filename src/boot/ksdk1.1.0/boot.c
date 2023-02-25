@@ -622,8 +622,8 @@ warpEnableI2Cpins(void)
 	 *		PTB3/kWarpPinI2C0_SCL_UART_TX	-->	(ALT2 == I2C)
 	 *		PTB4/kWarpPinI2C0_SDA_UART_RX	-->	(ALT2 == I2C)
 	 */
-	PORT_HAL_SetMuxMode(PORTA_BASE, 8, kPortMuxAlt2);
-	PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortMuxAlt2);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortMuxAlt2);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortMuxAlt2);
 
 	I2C_DRV_MasterInit(0 /* I2C instance */, (i2c_master_state_t *)&i2cMasterState);
 }
@@ -1621,8 +1621,16 @@ main(void)
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
+        uint32_t    numberOfConfigErrors = 0;
 //		initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
 		initMMA8451Q(	0x1D	/* i2cAddress */,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
+        numberOfConfigErrors += configureSensorMMA8451Q(0x00,/* Payload: Disable FIFO */
+            0x01/* Normal read 8bit, 800Hz, normal, active mode */
+        );
+        warpPrint(numberOfConfigErrors);
+        warpPrint("MMA8451 x, MMA8451 y, MMA8451 z,");
+        printSensorDataMMA8451Q(false);
+    warpPrint("\n");
 	#endif
     
 #if (WARP_BUILD_ENABLE_DEVINA219)

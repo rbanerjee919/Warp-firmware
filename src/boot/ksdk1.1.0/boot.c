@@ -1396,8 +1396,6 @@ warpWaitKey(void)
 	return rttKey;
 }
 
-
-
 int
 main(void)
 {
@@ -1627,10 +1625,6 @@ main(void)
         numberOfConfigErrors += configureSensorMMA8451Q(0x00,/* Payload: Disable FIFO */
             0x01/* Normal read 8bit, 800Hz, normal, active mode */
         );
-        warpPrint(numberOfConfigErrors);
-        warpPrint("MMA8451 x, MMA8451 y, MMA8451 z,");
-        printSensorDataMMA8451Q(false);
-    warpPrint("\n");
 	#endif
     
 #if (WARP_BUILD_ENABLE_DEVINA219)
@@ -2066,8 +2060,213 @@ main(void)
 		 *	want to use menu to progressiveley change the machine state with various
 		 *	commands.
 		 */
+        int x=0;
         
-        devSSD1331init();
+        //For CSV
+        warpPrint("--------------------------------------------------\n");
+        warpPrint("acc_x (g/4096), acc_y (g/4096), acc_z (g/4096), \n");
+       
+       char state_array[10]; //Have to define char array for states outside loop
+        
+        while (x < 100) {
+            
+            //warpPrint("%d",numberOfConfigErrors);
+            
+            //For debugging
+            //warpPrint("MMA8451 x, MMA8451 y, MMA8451 z,");
+            //printSensorDataMMA8451Q(false);
+        
+            uint16_t    readSensorRegisterXValueLSB,readSensorRegisterYValueLSB,readSensorRegisterZValueLSB;
+            uint16_t    readSensorRegisterXValueMSB,readSensorRegisterYValueMSB,readSensorRegisterZValueMSB;
+            int16_t        readSensorRegisterXValueCombined,readSensorRegisterYValueCombined,readSensorRegisterZValueCombined, acc_x_g_over_4096_hex, acc_y_g_over_4096_hex, acc_z_g_over_4096_hex;
+            WarpStatus    i2cReadStatus;
+            
+        
+            i2cReadStatus = readSensorRegisterMMA8451Q(kWarpSensorOutputRegisterMMA8451QOUT_X_MSB, 2 /* numberOfBytes */);
+            readSensorRegisterXValueMSB = deviceMMA8451QState.i2cBuffer[0];
+            readSensorRegisterXValueLSB = deviceMMA8451QState.i2cBuffer[1];
+            readSensorRegisterXValueCombined = ((readSensorRegisterXValueMSB & 0xFF) << 6) | (readSensorRegisterXValueLSB >> 2);
+
+            /*
+             *    Sign extend the 14-bit value based on knowledge that upper 2 bit are 0:
+             */
+            acc_x_g_over_4096_hex = (readSensorRegisterXValueCombined ^ (1 << 13)) - (1 << 13);
+        
+            i2cReadStatus = readSensorRegisterMMA8451Q(kWarpSensorOutputRegisterMMA8451QOUT_Y_MSB, 2 /* numberOfBytes */);
+            readSensorRegisterYValueMSB = deviceMMA8451QState.i2cBuffer[0];
+            readSensorRegisterYValueLSB = deviceMMA8451QState.i2cBuffer[1];
+            readSensorRegisterYValueCombined = ((readSensorRegisterYValueMSB & 0xFF) << 6) | (readSensorRegisterYValueLSB >> 2);
+
+            /*
+             *    Sign extend the 14-bit value based on knowledge that upper 2 bit are 0:
+             */
+            acc_y_g_over_4096_hex = (readSensorRegisterYValueCombined ^ (1 << 13)) - (1 << 13);
+            
+            i2cReadStatus = readSensorRegisterMMA8451Q(kWarpSensorOutputRegisterMMA8451QOUT_Z_MSB, 2 /* numberOfBytes */);
+            readSensorRegisterZValueMSB = deviceMMA8451QState.i2cBuffer[0];
+            readSensorRegisterZValueLSB = deviceMMA8451QState.i2cBuffer[1];
+            readSensorRegisterZValueCombined = ((readSensorRegisterZValueMSB & 0xFF) << 6) | (readSensorRegisterZValueLSB >> 2);
+
+            /*
+             *    Sign extend the 14-bit value based on knowledge that upper 2 bit are 0:
+             */
+            acc_z_g_over_4096_hex = (readSensorRegisterZValueCombined ^ (1 << 13)) - (1 << 13);
+            
+            //Next four lines for debugging
+            //warpPrint(" 0x%04x ",acc_x_g_over_4096_hex);
+            //warpPrint(" 0x%04x ",acc_y_g_over_4096_hex);
+            //warpPrint(" 0x%04x ",acc_z_g_over_4096_hex);
+            //warpPrint("\n");
+            
+            //For CSV
+             warpPrint(
+                             "%6d,         %6d,           %6d ",
+                             acc_x_g_over_4096_hex,
+                             acc_y_g_over_4096_hex,
+                             acc_z_g_over_4096_hex
+             );
+            
+            OSA_TimeDelay(1000);
+            
+            //Orientation detection practice
+            //Check positive cases first
+            /*
+            if ((acc_x_g_over_4096_hex > 0x0400) & (acc_x_g_over_4096_hex < 0xFFFFF000)) {
+                devSSD1331init(0xFF,0x00,0x00); //R
+                //OSA_TimeDelay(5000);
+            }
+            else if ( (acc_y_g_over_4096_hex > 0x0400  & (acc_y_g_over_4096_hex < 0xFFFFF000)) ) {
+                devSSD1331init(0x00,0x00,0xFF); //B
+                //OSA_TimeDelay(5000);
+            }
+            else if ((acc_z_g_over_4096_hex > 0x0400  & (acc_z_g_over_4096_hex < 0xFFFFF000)) ) {
+                devSSD1331init(0x00,0xFF,0x00); //G
+                //OSA_TimeDelay(5000);
+            }
+            //Then negative cases
+            else if ( (acc_x_g_over_4096_hex > 0xFFFFF000) & (acc_x_g_over_4096_hex < 0xFFFFFC00) ) { //Need 4Fs then value as stored as 64 bit number
+                devSSD1331init(0xFF,0xFF,0x00); //R+G=Y (yellow)
+                //OSA_TimeDelay(5000);
+            }
+            else if ( (acc_y_g_over_4096_hex > 0xFFFFF000) & (acc_y_g_over_4096_hex < 0xFFFFFC00) ) {
+                devSSD1331init(0xFF,0x00,0xFF); //R+B=M (magenta)
+                //OSA_TimeDelay(5000);
+            }
+            else if ( (acc_z_g_over_4096_hex > 0xFFFFF000) & (acc_z_g_over_4096_hex < 0xFFFFFC00) ) {
+                devSSD1331init(0xFF,0xFF,0xFF); //R+G+B=W (white) (default as upside down)
+                //OSA_TimeDelay(5000);
+            }
+            else {
+                devSSD1331init(0x00,0x00,0x00); //Black screen
+            }
+             */
+            
+            //Stationary state booleans
+            bool abs_val_condition_x_stationary = (acc_x_g_over_4096_hex > 0x0F6F) & (acc_x_g_over_4096_hex < 0x1092); //Check if between 0.975g and 1.025g (narrow range so that not satisfied by running)
+            bool abs_val_condition_y_stationary = ((acc_y_g_over_4096_hex < 0x019A) & (acc_y_g_over_4096_hex >= 0x0000)) | ((acc_y_g_over_4096_hex > 0xFFFFFE66) & (acc_y_g_over_4096_hex <= 0xFFFFFFFF)); //Check if between -0.1g and 0.1g
+            bool abs_val_condition_z_stationary = ((acc_z_g_over_4096_hex < 0x019A) & (acc_z_g_over_4096_hex >= 0x0000)) | ((acc_z_g_over_4096_hex > 0xFFFFFE66) & (acc_z_g_over_4096_hex <= 0xFFFFFFFF)); //Check if between -0.1g and 0.1g
+            bool overall_stationary = abs_val_condition_x_stationary & abs_val_condition_y_stationary & abs_val_condition_z_stationary;
+            
+            //Walking state booleans
+            bool abs_val_condition_x_walking = (acc_x_g_over_4096_hex > 0x0800) & (acc_x_g_over_4096_hex < 0x1800); //Checks if between 0.5g and 1.5g //asumes x direction (+ve) based on past observations
+            bool abs_val_condition_y_walking = (acc_y_g_over_4096_hex > 0xFFFFF000) & (acc_y_g_over_4096_hex < 0xFFFFFC00); //Checks if between -1.0g and -0.25g //assumes y direction (-ve) based on past observations
+            bool abs_val_condition_z_walking = ((acc_z_g_over_4096_hex < 0x0400) & (acc_z_g_over_4096_hex >= 0x0000)) | ((acc_z_g_over_4096_hex > 0xFFFFF800) & (acc_z_g_over_4096_hex <= 0xFFFFFFFF)); //Check if between -0.25g and 0.25g
+            bool overall_walking = abs_val_condition_x_walking & abs_val_condition_y_walking & abs_val_condition_z_walking;
+            
+            //Running state booleans
+            bool abs_val_condition_x_running = (acc_x_g_over_4096_hex > 0x1800) & (acc_x_g_over_4096_hex < 0x2000); //Check if between 1.5g and 2g (oscillations should lead to values in this range
+            bool abs_val_condition_y_running = ((acc_y_g_over_4096_hex < 0x0800) & (acc_y_g_over_4096_hex >= 0x0000)) | ((acc_y_g_over_4096_hex > 0xFFFFE800) & (acc_y_g_over_4096_hex <= 0xFFFFFFFF)); //Check if between -1.5g and 0.5g (oscillations should lead to values in this range
+            bool abs_val_condition_z_running = ((acc_z_g_over_4096_hex < 0x0800) & (acc_z_g_over_4096_hex >= 0x0000)) | ((acc_z_g_over_4096_hex > 0xFFFFE800) & (acc_z_g_over_4096_hex <= 0xFFFFFFFF));
+            bool overall_running = abs_val_condition_x_running & abs_val_condition_y_running & abs_val_condition_z_running;
+            
+            if (overall_stationary == true) {
+                state_array[x%10] = 's';
+                warpPrint("Making decision, current: Stationary \n");
+                OSA_TimeDelay(1000);
+            }
+            else if (overall_walking == true) {
+                state_array[x%10] = 'w';
+                warpPrint("Making decision, current: Walking \n");
+                OSA_TimeDelay(1000);
+            }
+            else if (overall_running == true) {
+                state_array[x%10] = 'r';
+                warpPrint("Making decision, current: Running \n");
+                OSA_TimeDelay(1000);
+            }
+            else {
+                state_array[x%10] = 'u';
+                warpPrint("Making decision, current: Undefined or Transition \n");
+                OSA_TimeDelay(1000);
+            }
+            
+            //Belows works => not the issue (the issue was delcaring char array inside loop => got reset every time x incremented)
+            //warpPrint("DEBUG HERE: ");
+            //warpPrint("%d, ",x);
+            //warpPrint("%c \n",state_array[x%10]);
+            
+            if ((x%10 == 0) & (x != 0)) { //Add x != 0 as no information at the start => cannot choose
+                int stationary_instances = 0, walking_instances = 0, running_instances = 0;
+                float stationary_prob = 0.0, walking_prob = 0.0, running_prob = 0.0;
+                int stationary_prob_percent = 0, walking_prob_percent = 0, running_prob_percent = 0;
+                //warpPrint("DEBUG HERE: %d \n",sizeof(state_array)/(sizeof(state_array[0])));
+                for (int i = 0; i < 10; i++) {
+                    //warpPrint("DEBUG ME: ");
+                    //warpPrint("%d \n",i);
+                    warpPrint("%c",state_array[i]);
+                    warpPrint("\n");
+                    if (state_array[i] == 's') {
+                        stationary_instances += 1;
+                    }
+                    else if (state_array[i] == 'w') {
+                        walking_instances += 1;
+                    }
+                    else if (state_array[i] == 'r') {
+                        running_instances += 1;
+                    }
+                }
+                warpPrint("DEBUG: ");
+                warpPrint("%d, %d, %d \n", stationary_instances, walking_instances, running_instances);
+                //Once state can be shown on terminal, set up OLED screen to display colour based on state so that JLINK CONN not required
+                //Running given priority as good at recognising stationary and walking
+                if (running_instances > 1) {
+                    running_prob = (float)running_instances/(stationary_instances + walking_instances + running_instances)*100;
+                    running_prob_percent = (int)running_prob;
+                    //running_prob_percent = 80;
+                    warpPrint("State: Running with probability %d %%",running_prob_percent); //If condition value is that high i.e. more than once every 3-4 times (here 10 times), then running confirmed
+                    warpPrint("\n");
+                    devSSD1331init(0xFF,0x00,0x00); //R
+                    OSA_TimeDelay(3000);
+                }
+                else if (walking_instances > 3) {
+                    walking_prob = (float)walking_instances/(stationary_instances + walking_instances + running_instances)*100;
+                    walking_prob_percent = (int)walking_prob;
+                    //walking_prob_percent = 20;
+                    warpPrint("State: Walking with probability %d %%",walking_prob_percent); //Walking predicted much better than running (but have threshold of 3 in case transition period between stationary and walking or running and walking
+                    warpPrint("\n");
+                    devSSD1331init(0x00,0x00,0xFF); //B
+                    OSA_TimeDelay(3000);
+                }
+                else {
+                    stationary_prob = (float)stationary_instances/(stationary_instances + walking_instances + running_instances)*100;
+                    stationary_prob_percent = (int)stationary_prob;
+                    //stationary_prob_percent = 70;
+                    warpPrint("State: Stationary with probability %d %%",stationary_prob_percent);
+                    warpPrint("\n");
+                    devSSD1331init(0x00,0xFF,0x00); //G
+                    OSA_TimeDelay(3000);
+                }
+            }
+            
+            
+            
+            x += 1;
+            
+        }
+        //For CSV
+        warpPrint("--------------------------------------------------\n");
+        warpPrint("END OF CSV\n\n");
+ 
         
 		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
 

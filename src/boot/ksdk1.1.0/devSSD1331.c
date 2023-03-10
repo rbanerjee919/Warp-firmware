@@ -67,7 +67,7 @@ writeCommand(uint8_t commandByte)
 
 
 int
-devSSD1331init(void)
+devSSD1331init(uint8_t R_fill_val,uint8_t G_fill_val,uint8_t B_fill_val)
 {
 	/*
 	 *	Override Warp firmware's use of these pins.
@@ -176,9 +176,9 @@ devSSD1331init(void)
     writeCommand(0xFF);
     writeCommand(0x00);
 
-    writeCommand(0x00); //Set RGB colour values for fill (brightest breen)
-    writeCommand(0xFF);
-    writeCommand(0x00);
+    writeCommand(R_fill_val); //Set RGB colour values for fill (brightest breen)
+    writeCommand(G_fill_val);
+    writeCommand(B_fill_val);
 
 
 	return 0;

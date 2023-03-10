@@ -42,4 +42,4 @@ typedef enum
 	kSSD1331CommandVCOMH		= 0xBE,
 } SSD1331Commands;
 
-int	devSSD1331init(void);
+int	devSSD1331init(uint8_t R_fill_val,uint8_t G_fill_val,uint8_t B_fill_val);

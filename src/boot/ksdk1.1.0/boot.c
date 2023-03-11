@@ -2175,29 +2175,25 @@ main(void)
             
             //Running state booleans
             bool abs_val_condition_x_running = (acc_x_g_over_4096_hex > 0x1800) & (acc_x_g_over_4096_hex < 0x2000); //Check if between 1.5g and 2g (oscillations should lead to values in this range
-            bool abs_val_condition_y_running = ((acc_y_g_over_4096_hex < 0x0800) & (acc_y_g_over_4096_hex >= 0x0000)) | ((acc_y_g_over_4096_hex > 0xFFFFE800) & (acc_y_g_over_4096_hex <= 0xFFFFFFFF)); //Check if between -1.5g and 0.5g (oscillations should lead to values in this range
-            bool abs_val_condition_z_running = ((acc_z_g_over_4096_hex < 0x0800) & (acc_z_g_over_4096_hex >= 0x0000)) | ((acc_z_g_over_4096_hex > 0xFFFFE800) & (acc_z_g_over_4096_hex <= 0xFFFFFFFF));
+            bool abs_val_condition_y_running = ((acc_y_g_over_4096_hex < 0x0800) & (acc_y_g_over_4096_hex >= 0x0000)) | ((acc_y_g_over_4096_hex > 0xFFFFE800) & (acc_y_g_over_4096_hex <= 0xFFFFFFFF)); //Check if between -1.5g and 0.5g (oscillations should lead to values in this range)
+            bool abs_val_condition_z_running = ((acc_z_g_over_4096_hex < 0x0800) & (acc_z_g_over_4096_hex >= 0x0000)) | ((acc_z_g_over_4096_hex > 0xFFFFE800) & (acc_z_g_over_4096_hex <= 0xFFFFFFFF)); //Check if between -1.5g and 0.5g (oscillations should lead to values in this range)
             bool overall_running = abs_val_condition_x_running & abs_val_condition_y_running & abs_val_condition_z_running;
             
             if (overall_stationary == true) {
                 state_array[x%10] = 's';
                 warpPrint("Making decision, current: Stationary \n");
-                OSA_TimeDelay(1000);
             }
             else if (overall_walking == true) {
                 state_array[x%10] = 'w';
                 warpPrint("Making decision, current: Walking \n");
-                OSA_TimeDelay(1000);
             }
             else if (overall_running == true) {
                 state_array[x%10] = 'r';
                 warpPrint("Making decision, current: Running \n");
-                OSA_TimeDelay(1000);
             }
             else {
                 state_array[x%10] = 'u';
                 warpPrint("Making decision, current: Undefined or Transition \n");
-                OSA_TimeDelay(1000);
             }
             
             //Belows works => not the issue (the issue was delcaring char array inside loop => got reset every time x incremented)
@@ -2205,16 +2201,18 @@ main(void)
             //warpPrint("%d, ",x);
             //warpPrint("%c \n",state_array[x%10]);
             
-            if ((x%10 == 0) & (x != 0)) { //Add x != 0 as no information at the start => cannot choose
+            if ((x%10 == 0 | x == 99) & (x != 0)) { //Add x != 0 as no information at the start => cannot choose
                 int stationary_instances = 0, walking_instances = 0, running_instances = 0;
                 float stationary_prob = 0.0, walking_prob = 0.0, running_prob = 0.0;
                 int stationary_prob_percent = 0, walking_prob_percent = 0, running_prob_percent = 0;
+                float stationary_contrast_val = 0.0, walking_contrast_val = 0.0, running_contrast_val = 0.0;
+                int stationary_contrast_val_int = 0, walking_contrast_val_int = 0, running_contrast_val_int = 0;
                 //warpPrint("DEBUG HERE: %d \n",sizeof(state_array)/(sizeof(state_array[0])));
                 for (int i = 0; i < 10; i++) {
                     //warpPrint("DEBUG ME: ");
                     //warpPrint("%d \n",i);
-                    warpPrint("%c",state_array[i]);
-                    warpPrint("\n");
+                    //warpPrint("%c",state_array[i]);
+                    //warpPrint("\n");
                     if (state_array[i] == 's') {
                         stationary_instances += 1;
                     }
@@ -2227,33 +2225,52 @@ main(void)
                 }
                 warpPrint("DEBUG: ");
                 warpPrint("%d, %d, %d \n", stationary_instances, walking_instances, running_instances);
+                
+                running_prob = (float)running_instances/(stationary_instances + walking_instances + running_instances)*100;
+                walking_prob = (float)walking_instances/(stationary_instances + walking_instances + running_instances)*100;
+                stationary_prob = (float)stationary_instances/(stationary_instances + walking_instances + running_instances)*100;
+                running_prob_percent = (int)running_prob;
+                walking_prob_percent = (int)walking_prob;
+                stationary_prob_percent = (int)stationary_prob;
                 //Once state can be shown on terminal, set up OLED screen to display colour based on state so that JLINK CONN not required
                 //Running given priority as good at recognising stationary and walking
                 if (running_instances > 1) {
-                    running_prob = (float)running_instances/(stationary_instances + walking_instances + running_instances)*100;
-                    running_prob_percent = (int)running_prob;
+                    if (stationary_instances + walking_instances + running_instances == 0) {
+                        running_prob = 0.0;
+                    }
                     //running_prob_percent = 80;
-                    warpPrint("State: Running with probability %d %%",running_prob_percent); //If condition value is that high i.e. more than once every 3-4 times (here 10 times), then running confirmed
+                    warpPrint("State: Running with probability %d %%, Walking with probability %d %%, Stationary with probability %d %%" ,running_prob_percent,walking_prob_percent,stationary_prob_percent); //If condition value is that high i.e. more than once every 3-4 times (here 10 times), then running confirmed
                     warpPrint("\n");
-                    devSSD1331init(0xFF,0x00,0x00); //R
+                    running_contrast_val = running_prob/100 * (float) 255;
+                    running_contrast_val_int = (int)running_contrast_val;
+                    devSSD1331init(running_contrast_val_int,0x00,0x00); //R
                     OSA_TimeDelay(3000);
                 }
                 else if (walking_instances > 3) {
-                    walking_prob = (float)walking_instances/(stationary_instances + walking_instances + running_instances)*100;
-                    walking_prob_percent = (int)walking_prob;
+                    if (stationary_instances + walking_instances + running_instances == 0) {
+                        walking_prob = 0.0;
+                    }
                     //walking_prob_percent = 20;
-                    warpPrint("State: Walking with probability %d %%",walking_prob_percent); //Walking predicted much better than running (but have threshold of 3 in case transition period between stationary and walking or running and walking
+                    warpPrint("State: Walking with probability %d %%, Stationary with probability %d %%, Running with probability %d %%" ,walking_prob_percent,stationary_prob_percent,running_prob_percent); //Walking predicted much better than running (but have threshold of 3 in case transition period between stationary and walking or running and walking
                     warpPrint("\n");
-                    devSSD1331init(0x00,0x00,0xFF); //B
+                    walking_contrast_val = walking_prob/100 * (float) 255;
+                    walking_contrast_val_int = (int)walking_contrast_val;
+                    devSSD1331init(0x00,0x00,walking_contrast_val_int); //B
                     OSA_TimeDelay(3000);
                 }
                 else {
-                    stationary_prob = (float)stationary_instances/(stationary_instances + walking_instances + running_instances)*100;
-                    stationary_prob_percent = (int)stationary_prob;
+                    if (stationary_instances + walking_instances + running_instances == 0) {
+                        stationary_prob = 0.0;
+                    }
                     //stationary_prob_percent = 70;
-                    warpPrint("State: Stationary with probability %d %%",stationary_prob_percent);
+                    warpPrint("State: Stationary with probability %d %%, Walking with probability %d %%, Running with probability %d %%" ,stationary_prob_percent,walking_prob_percent,running_prob_percent);
                     warpPrint("\n");
-                    devSSD1331init(0x00,0xFF,0x00); //G
+                    stationary_contrast_val = stationary_prob/100 * (float) 255;
+                    stationary_contrast_val_int = (int)stationary_contrast_val;
+                    //Next two lines for debugging
+                    //warpPrint("Contrast value: %d ",stationary_contrast_val_int);
+                    //warpPrint("\n");
+                    devSSD1331init(0x00,stationary_contrast_val_int,0x00); //G
                     OSA_TimeDelay(3000);
                 }
             }

@@ -2112,6 +2112,10 @@ main(void)
              */
             acc_z_g_over_4096_hex = (readSensorRegisterZValueCombined ^ (1 << 13)) - (1 << 13);
             
+            warpPrint("\n");
+            warpPrint("\r\tSIM->SCGC6=0x%02x\t\tRTC->SR=0x%02x\t\tRTC->TPR=0x%02x\n", SIM->SCGC6, RTC->SR, RTC->TPR);
+            warpPrint("\n");
+            
             //Next four lines for debugging
             //warpPrint(" 0x%04x ",acc_x_g_over_4096_hex);
             //warpPrint(" 0x%04x ",acc_y_g_over_4096_hex);
@@ -2275,7 +2279,9 @@ main(void)
                 }
             }
             
-            
+            warpPrint("\n");
+            warpPrint("\r\tSIM->SCGC6=0x%02x\t\tRTC->SR=0x%02x\t\tRTC->TPR=0x%02x\n", SIM->SCGC6, RTC->SR, RTC->TPR);
+            warpPrint("\n");
             
             x += 1;
             
@@ -2283,7 +2289,6 @@ main(void)
         //For CSV
         warpPrint("--------------------------------------------------\n");
         warpPrint("END OF CSV\n\n");
- 
         
 		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
 
